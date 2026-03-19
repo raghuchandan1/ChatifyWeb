@@ -6,162 +6,585 @@
   <title>ChatifyMail — Priority Mail Chat</title>
   <meta name="description" content="Manage Gmail like a chat. Track priority contacts and get instant notifications. Smart email monitoring, chat-like replies, and a home screen widget — all privacy-first." />
   <link rel="shortcut icon" type="image/x-icon" href="favicon.ico?">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
-    :root{
-      --bg:#0f1724; --card:#0b1220; --muted:#9aa4b2; --accent:#6ee7b7; --accent2:#60a5fa; --glass: rgba(255,255,255,0.03);
-      --maxw:1100px; --radius:14px;
+    :root {
+      --bg: #080c18;
+      --card: rgba(255,255,255,0.04);
+      --card-border: rgba(255,255,255,0.06);
+      --muted: #8b95a8;
+      --accent: #6ee7b7;
+      --accent2: #818cf8;
+      --accent3: #f472b6;
+      --glass: rgba(255,255,255,0.03);
+      --glass-border: rgba(255,255,255,0.08);
+      --maxw: 1140px;
+      --radius: 20px;
+      --radius-sm: 14px;
       color-scheme: dark;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0; font-family:'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background:linear-gradient(180deg,#071026 0%, #07121b 60%); color:#e6eef6; -webkit-font-smoothing:antialiased;
-      display:flex; align-items:center; justify-content:center; padding:40px;
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    html, body { height: 100%; }
+
+    body {
+      font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: #e2e8f0;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+      position: relative;
     }
-    .container{width:100%; max-width:var(--maxw)}
 
-    header{display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:26px; flex-wrap:wrap}
-    .brand{display:flex;align-items:center;gap:12px}
-    .logo{width:48px;height:48px;border-radius:12px;box-shadow:0 6px 20px rgba(30,40,60,0.6)}
-    h1{font-size:20px;margin:0;font-weight:700}
-    .tag{color:var(--muted); font-size:13px}
+    /* ─── Animated Background ─── */
+    .bg-mesh {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .bg-mesh .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.35;
+      animation: float 20s ease-in-out infinite;
+    }
+    .blob-1 { width: 600px; height: 600px; background: #6ee7b7; top: -10%; left: -10%; animation-delay: 0s; }
+    .blob-2 { width: 500px; height: 500px; background: #818cf8; top: 40%; right: -10%; animation-delay: -7s; }
+    .blob-3 { width: 450px; height: 450px; background: #f472b6; bottom: -10%; left: 30%; animation-delay: -14s; }
 
-    .layout{display:grid;grid-template-columns:1fr 420px;gap:24px}
-    @media (max-width:980px){ .layout{grid-template-columns:1fr} }
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      25% { transform: translate(40px, -30px) scale(1.05); }
+      50% { transform: translate(-20px, 40px) scale(0.95); }
+      75% { transform: translate(30px, 20px) scale(1.02); }
+    }
 
-    /* Left column (hero + features) */
-    .hero{background:var(--glass); padding:26px; border-radius:var(--radius); box-shadow:0 6px 30px rgba(2,6,23,0.5)}
-    .hero h2{margin:0 0 10px 0;font-size:28px;line-height:1.3}
-    .hero h2 span{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-    .hero p{margin:0 0 18px 0;color:var(--muted);line-height:1.6}
+    /* ─── Noise Overlay ─── */
+    .noise {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      opacity: 0.03;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-size: 256px 256px;
+    }
 
-    .actions{display:flex;gap:12px;flex-wrap:wrap}
-    .btn{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(90deg,#6ee7b7,#60a5fa);color:#042;padding:10px 18px;border-radius:10px;border:0;font-weight:600;cursor:pointer;font-size:14px;text-decoration:none;transition:transform .15s,box-shadow .15s}
-    .btn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(110,231,183,0.25)}
-    .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.08);color:var(--muted)}
-    .btn.ghost:hover{border-color:rgba(255,255,255,0.2);color:#e6eef6}
+    /* ─── Container ─── */
+    .container {
+      position: relative;
+      z-index: 2;
+      max-width: var(--maxw);
+      margin: 0 auto;
+      padding: 0 24px;
+    }
 
-    .features{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:18px}
-    @media (max-width:600px){ .features{grid-template-columns:1fr} }
-    .feature{padding:14px;border-radius:10px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.03);transition:border-color .2s,background .2s}
-    .feature:hover{border-color:rgba(110,231,183,0.15);background:rgba(255,255,255,0.03)}
-    .feature .icon{font-size:20px;margin-bottom:6px}
-    .feature h4{margin:0 0 6px 0;font-size:14px;font-weight:600}
-    .feature p{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
+    /* ─── Header ─── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 0;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .brand { display: flex; align-items: center; gap: 14px; }
+    .logo {
+      width: 48px; height: 48px;
+      border-radius: 14px;
+      box-shadow: 0 8px 32px rgba(110,231,183,0.15);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .logo:hover { transform: scale(1.1) rotate(-3deg); }
+    .brand-text h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; }
+    .brand-text .tag { color: var(--muted); font-size: 13px; margin-top: 2px; }
 
-    /* Right column (preview chat list + onboarding) */
-    .aside{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); padding:18px;border-radius:12px}
-    .aside-title{font-size:15px;font-weight:600;margin:0 0 12px 0;display:flex;align-items:center;gap:8px}
-    .aside-title .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite}
-    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+    .header-actions { display: flex; gap: 12px; align-items: center; }
+    .pill {
+      padding: 7px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.05);
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
 
-    .thread{display:flex;gap:12px;padding:10px;border-radius:10px;align-items:center;margin-bottom:8px;cursor:default;transition:background .15s}
-    .thread:hover{background:rgba(255,255,255,0.03)}
-    .avatar{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,rgba(110,231,183,0.15),rgba(96,165,250,0.15));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:var(--accent)}
-    .meta{flex:1;min-width:0}
-    .meta h5{margin:0;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .meta p{margin:4px 0 0 0;color:var(--muted);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .badge{background:var(--accent);color:#042;font-size:11px;font-weight:700;padding:2px 7px;border-radius:999px;min-width:20px;text-align:center}
-    .time{font-size:12px;color:var(--muted);text-align:right;display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+    /* ─── Buttons ─── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 22px;
+      border-radius: 12px;
+      border: 0;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 14px;
+      text-decoration: none;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #6ee7b7 0%, #818cf8 50%, #f472b6 100%);
+      color: #0a0e1a;
+      box-shadow: 0 4px 20px rgba(110,231,183,0.2), 0 0 60px rgba(129,140,248,0.1);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 8px 32px rgba(110,231,183,0.3), 0 0 80px rgba(129,140,248,0.15);
+    }
+    .btn-ghost {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--glass-border);
+      color: var(--muted);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .btn-ghost:hover {
+      border-color: rgba(255,255,255,0.2);
+      color: #e2e8f0;
+      background: rgba(255,255,255,0.08);
+      transform: translateY(-2px);
+    }
 
-    /* audience section */
-    .audience{margin-top:14px;padding:14px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.005));border:1px solid rgba(255,255,255,0.02)}
-    .audience h4{margin:0 0 10px 0;font-size:14px;font-weight:600}
-    .audience-list{display:flex;flex-direction:column;gap:8px}
-    .audience-item{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--muted);line-height:1.5}
-    .audience-item .emoji{font-size:16px;flex-shrink:0}
+    /* ─── Hero Section ─── */
+    .hero-section {
+      padding: 60px 0 40px;
+      text-align: center;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 18px;
+      border-radius: 999px;
+      background: rgba(110,231,183,0.08);
+      border: 1px solid rgba(110,231,183,0.15);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--accent);
+      margin-bottom: 28px;
+      animation: fadeInDown 0.8s ease;
+    }
+    .hero-badge .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-    footer{margin-top:18px;color:var(--muted);font-size:13px}
+    .hero-title {
+      font-size: clamp(36px, 6vw, 64px);
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -1.5px;
+      margin-bottom: 20px;
+      animation: fadeInUp 0.8s ease;
+    }
+    .hero-title .gradient-text {
+      background: linear-gradient(135deg, var(--accent), var(--accent2), var(--accent3));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      background-size: 200% 200%;
+      animation: gradientShift 5s ease infinite;
+    }
+    @keyframes gradientShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
 
-    /* small helper */
-    .pill{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.04);font-size:12px;border:1px solid rgba(255,255,255,0.04)}
+    .hero-subtitle {
+      font-size: clamp(16px, 2vw, 20px);
+      color: var(--muted);
+      max-width: 640px;
+      margin: 0 auto 36px;
+      line-height: 1.7;
+      animation: fadeInUp 0.8s ease 0.1s both;
+    }
 
-    /* Play Store badge */
-    .play-badge{height:40px;transition:transform .15s}
-    .play-badge:hover{transform:scale(1.03)}
+    .hero-actions {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      flex-wrap: wrap;
+      animation: fadeInUp 0.8s ease 0.2s both;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── Main Grid ─── */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 400px;
+      gap: 28px;
+      padding-bottom: 40px;
+    }
+    @media (max-width: 960px) { .main-grid { grid-template-columns: 1fr; } }
+
+    /* ─── Glass Card ─── */
+    .glass-card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      padding: 28px;
+      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .glass-card:hover {
+      border-color: rgba(255,255,255,0.1);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+    }
+
+    /* ─── Features Grid ─── */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    @media (max-width: 600px) { .features-grid { grid-template-columns: 1fr; } }
+
+    .feature-card {
+      padding: 22px;
+      border-radius: var(--radius-sm);
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.04);
+      transition: all 0.35s ease;
+      cursor: default;
+    }
+    .feature-card:hover {
+      border-color: rgba(110,231,183,0.2);
+      background: rgba(255,255,255,0.05);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+    }
+    .feature-icon {
+      width: 42px; height: 42px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      margin-bottom: 14px;
+      background: linear-gradient(135deg, rgba(110,231,183,0.1), rgba(129,140,248,0.1));
+      border: 1px solid rgba(110,231,183,0.1);
+    }
+    .feature-card h4 {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -0.2px;
+    }
+    .feature-card p {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    /* ─── Section Titles ─── */
+    .section-label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+    .section-title {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 20px;
+    }
+
+    /* ─── Aside (Preview) ─── */
+    .aside { display: flex; flex-direction: column; gap: 16px; }
+
+    .aside-title {
+      font-size: 16px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .aside-title .live-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 12px var(--accent);
+      animation: pulse 2s infinite;
+    }
+
+    /* Thread items */
+    .thread {
+      display: flex;
+      gap: 12px;
+      padding: 12px;
+      border-radius: var(--radius-sm);
+      align-items: center;
+      cursor: default;
+      transition: all 0.25s ease;
+    }
+    .thread:hover {
+      background: rgba(255,255,255,0.04);
+      transform: translateX(4px);
+    }
+    .avatar {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 16px;
+      color: var(--accent);
+      background: linear-gradient(135deg, rgba(110,231,183,0.12), rgba(129,140,248,0.12));
+      border: 1px solid rgba(110,231,183,0.1);
+      flex-shrink: 0;
+    }
+    .meta { flex: 1; min-width: 0; }
+    .meta h5 { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .meta p { margin-top: 3px; color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .time-col { text-align: right; display: flex; flex-direction: column; gap: 6px; align-items: flex-end; }
+    .time-col span { font-size: 12px; color: var(--muted); }
+    .badge {
+      background: var(--accent);
+      color: #0a0e1a;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 999px;
+      min-width: 20px;
+      text-align: center;
+    }
+
+    /* ─── Audience Section ─── */
+    .audience-card { margin-top: 0; }
+    .audience-list { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
+    .audience-item {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    .audience-item .emoji {
+      font-size: 18px;
+      flex-shrink: 0;
+      width: 32px; height: 32px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .audience-item strong { color: #e2e8f0; }
+
+    /* ─── Support + Footer ─── */
+    .footer-section {
+      padding: 48px 0 32px;
+      text-align: center;
+    }
+
+    .support-card {
+      max-width: 480px;
+      margin: 0 auto 40px;
+      padding: 28px 32px;
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, rgba(110,231,183,0.06), rgba(129,140,248,0.06));
+      border: 1px solid rgba(110,231,183,0.12);
+      text-align: center;
+    }
+    .support-card h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .support-card p {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+    .support-email {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--glass-border);
+      color: var(--accent);
+      font-size: 15px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+    .support-email:hover {
+      background: rgba(110,231,183,0.1);
+      border-color: rgba(110,231,183,0.3);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(110,231,183,0.15);
+    }
+
+    .footer-bottom {
+      padding-top: 24px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .footer-bottom a {
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-bottom a:hover { color: var(--accent); }
+    .footer-links {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin-top: 10px;
+    }
+
+    /* ─── Fade In Animation ─── */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.7s ease, transform 0.7s ease;
+    }
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 600px) {
+      .hero-section { padding: 40px 0 24px; }
+      .hero-title { letter-spacing: -0.8px; }
+      .glass-card { padding: 20px; }
+      .main-grid { gap: 20px; }
+    }
   </style>
 </head>
 <body>
+
+  <!-- Animated Background -->
+  <div class="bg-mesh">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+  </div>
+  <div class="noise"></div>
+
   <div class="container">
 
+    <!-- Header -->
     <header>
       <div class="brand">
         <img class="logo" src="favicon.svg" alt="ChatifyMail Logo">
-        <div>
+        <div class="brand-text">
           <h1>ChatifyMail</h1>
-          <div class="tag">Manage Gmail like a chat. Track priority contacts and get instant notifications.</div>
+          <div class="tag">Priority email, simplified.</div>
         </div>
       </div>
-
-      <div style="display:flex;gap:12px;align-items:center">
-        <div class="pill">Free • Privacy-first</div>
-        <a class="btn" href="https://play.google.com/store/apps/details?id=com.chatifymail.app" target="_blank" rel="noopener">
-          ▶ Get on Google Play
+      <div class="header-actions">
+        <div class="pill">✦ Free &bull; Privacy-first</div>
+        <a class="btn btn-primary" href="https://play.google.com/store/apps/details?id=com.chatifymail.app" target="_blank" rel="noopener">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Get the App
         </a>
       </div>
     </header>
 
-    <main class="layout">
-      
-      <!-- HERO + FEATURES -->
-      <section class="hero">
-        <h2>Focus on emails that <span>actually matter.</span></h2>
-        <p>ChatifyMail transforms your overwhelming Gmail inbox into an organized, chat-like experience. Monitor important contacts, get instant priority notifications, and reply quickly — all while keeping your data private and secure.</p>
+    <!-- Hero -->
+    <section class="hero-section">
+      <div class="hero-badge"><span class="dot"></span> Now available on Google Play</div>
+      <h2 class="hero-title">
+        Focus on emails that<br><span class="gradient-text">actually matter.</span>
+      </h2>
+      <p class="hero-subtitle">
+        ChatifyMail transforms your overwhelming Gmail inbox into an organized, chat-like experience. Monitor important contacts, get instant priority notifications, and reply quickly — all while keeping your data private.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="https://play.google.com/store/apps/details?id=com.chatifymail.app" target="_blank" rel="noopener">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Download on Play Store
+        </a>
+        <a class="btn btn-ghost" href="privacy-policy.html">Privacy Policy</a>
+      </div>
+    </section>
 
-        <div class="actions">
-          <a class="btn" href="https://play.google.com/store/apps/details?id=com.chatifymail.app" target="_blank" rel="noopener">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-            Download on Play Store
-          </a>
-          <a class="btn ghost" href="privacy-policy.html">Privacy Policy</a>
-        </div>
+    <!-- Main Content: Features + Preview -->
+    <main class="main-grid">
 
-        <div class="features">
-          <div class="feature">
-            <div class="icon">🔔</div>
+      <!-- Features -->
+      <section class="glass-card fade-in">
+        <div class="section-label">Features</div>
+        <div class="section-title">Everything you need, nothing you don't.</div>
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">🔔</div>
             <h4>Smart Email Monitoring</h4>
-            <p>Track unread emails from your important contacts. Get instant notifications for priority messages so you never miss what matters.</p>
+            <p>Track unread emails from important contacts. Get instant notifications for priority messages so you never miss what matters.</p>
           </div>
-          <div class="feature">
-            <div class="icon">💬</div>
+          <div class="feature-card">
+            <div class="feature-icon">💬</div>
             <h4>Focused Communication</h4>
             <p>Send quick replies directly with a streamlined, chat-like interface designed for essential email management.</p>
           </div>
-          <div class="feature">
-            <div class="icon">📱</div>
+          <div class="feature-card">
+            <div class="feature-icon">📱</div>
             <h4>Widget Support</h4>
             <p>Home screen widget shows unread counts at a glance — quick access to important email updates without opening the app.</p>
           </div>
-          <div class="feature">
-            <div class="icon">🔒</div>
+          <div class="feature-card">
+            <div class="feature-icon">🔒</div>
             <h4>Secure &amp; Private</h4>
-            <p>End-to-end encrypted credential storage. OAuth2 authentication with Google. Your data stays private — we never store email content on our servers.</p>
+            <p>End-to-end encrypted credential storage. OAuth2 with Google. Your data stays private — we never store email content.</p>
           </div>
-          <div class="feature">
-            <div class="icon">🔄</div>
+          <div class="feature-card">
+            <div class="feature-icon">🔄</div>
             <h4>Background Sync</h4>
             <p>Automatic email checking in the background with smart notifications. Battery-optimized processing that works while you sleep.</p>
           </div>
-          <div class="feature">
-            <div class="icon">⚡</div>
+          <div class="feature-card">
+            <div class="feature-icon">⚡</div>
             <h4>Clean &amp; Fast</h4>
             <p>Lightweight, distraction-free design. No ads, no bloat — just the emails you care about, organized and ready.</p>
           </div>
         </div>
-
       </section>
 
-      <!-- ASIDE: PREVIEW + AUDIENCE -->
-      <aside class="aside">
-        <h3 class="aside-title"><span class="dot"></span> Priority Inbox Preview</h3>
-
-        <div id="threadList">
-          <!-- JS will populate -->
+      <!-- Sidebar -->
+      <div class="aside">
+        <!-- Live Preview -->
+        <div class="glass-card fade-in">
+          <div class="aside-title"><span class="live-dot"></span> Priority Inbox Preview</div>
+          <div id="threadList" style="margin-top: 12px;"></div>
         </div>
 
-        <div class="audience">
-          <h4>Built for people who need focus</h4>
+        <!-- Audience -->
+        <div class="glass-card audience-card fade-in">
+          <div class="section-label">Who it's for</div>
+          <h4 class="section-title" style="font-size:17px; margin-bottom: 4px;">Built for people who need focus</h4>
           <div class="audience-list">
             <div class="audience-item">
               <span class="emoji">💼</span>
@@ -177,53 +600,77 @@
             </div>
           </div>
         </div>
-
-        <footer>
-          <div>Made with ♥ by the ChatifyMail Team</div>
-          <div style="margin-top:6px;color:var(--muted);font-size:12px">
-            <a href="mailto:chatify@atomicmail.io" style="color:inherit;text-decoration:underline">chatify@atomicmail.io</a>
-          </div>
-          <div style="margin-top:6px;color:var(--muted);font-size:12px">
-            © 2026 ChatifyMail. All rights reserved. |
-            <a href="privacy-policy.html" style="color:inherit;text-decoration:underline">Privacy Policy</a>
-          </div>
-        </footer>
-      </aside>
+      </div>
 
     </main>
-  
+
+    <!-- Support + Footer -->
+    <section class="footer-section fade-in">
+      <div class="support-card">
+        <h3>Need Help?</h3>
+        <p>Have questions, feedback, or need support?<br>We'd love to hear from you.</p>
+        <a href="mailto:chatify@atomicmail.io" class="support-email">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          chatify@atomicmail.io
+        </a>
+      </div>
+      <div class="footer-bottom">
+        <div>Made with ♥ by the ChatifyMail Team</div>
+        <div class="footer-links">
+          <span>© 2026 ChatifyMail</span>
+          <a href="privacy-policy.html">Privacy Policy</a>
+        </div>
+      </div>
+    </section>
+
   </div>
 
 <script>
+  // ─── Sample Data ───
   const sample = [
-    {id:1, title:'Dr. Mehta', subtitle:'Test results attached · Lab report', time:'09:12', unread:2},
-    {id:2, title:'HR Team', subtitle:'Important: revised leave policy dates', time:'Yesterday', unread:1},
-    {id:3, title:'Mom', subtitle:'Weekend photos from trip 📷', time:'Mar 18', unread:0},
-    {id:4, title:'GitHub', subtitle:'PR review requested for #42', time:'Mar 16', unread:3},
-    {id:5, title:'Prof. Kumar', subtitle:'Assignment deadline extended', time:'Mar 15', unread:1},
+    { id: 1, title: 'Dr. Mehta',   subtitle: 'Test results attached · Lab report',      time: '09:12',   unread: 2 },
+    { id: 2, title: 'HR Team',     subtitle: 'Important: revised leave policy dates',    time: 'Yesterday', unread: 1 },
+    { id: 3, title: 'Mom',         subtitle: 'Weekend photos from trip 📷',              time: 'Mar 18',  unread: 0 },
+    { id: 4, title: 'GitHub',      subtitle: 'PR review requested for #42',              time: 'Mar 16',  unread: 3 },
+    { id: 5, title: 'Prof. Kumar', subtitle: 'Assignment deadline extended',              time: 'Mar 15',  unread: 1 },
   ];
 
-  function renderThreads(list){
-    const el = document.getElementById('threadList'); el.innerHTML='';
-    list.forEach(t=>{
-      const div=document.createElement('div'); div.className='thread';
+  function renderThreads(list) {
+    const el = document.getElementById('threadList');
+    el.innerHTML = '';
+    list.forEach((t, i) => {
+      const div = document.createElement('div');
+      div.className = 'thread';
+      div.style.animationDelay = `${i * 0.08}s`;
       div.innerHTML = `
         <div class="avatar">${t.title.charAt(0)}</div>
         <div class="meta">
           <h5>${t.title}</h5>
           <p>${t.subtitle}</p>
         </div>
-        <div class="time">
+        <div class="time-col">
           <span>${t.time}</span>
           ${t.unread ? `<span class="badge">${t.unread}</span>` : ''}
         </div>
       `;
       el.appendChild(div);
-    })
+    });
   }
 
-  // Render on load
-  document.addEventListener('DOMContentLoaded', ()=>{ renderThreads(sample); });
+  // ─── Intersection Observer for fade-in ───
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    renderThreads(sample);
+    document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+  });
 </script>
 </body>
 </html>
